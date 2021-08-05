@@ -44,8 +44,8 @@ function NeuralNetwork(parent1=null, parent2=null, clone=false) {
             this.hiddenLayerNodes = genLayer(10, data.size + 1);
             this.finalLayerNodes = genLayer(4, 11);
         } else if (parent2 != null) { // SEXUAL REPRODUCTION/NO MUTATIONS
-            this.hiddenLayerNodes = breedLayers(parent1.hiddenLayerNodes, parent2.hiddenLayerNodes, +mutRateInput.value);
-            this.finalLayerNodes = breedLayers(parent1.finalLayerNodes, parent2.finalLayerNodes, +mutRateInput.value);
+            this.hiddenLayerNodes = breedLayers(parent1.hiddenLayerNodes, parent2.hiddenLayerNodes, +mutRateInput.value / 100);
+            this.finalLayerNodes = breedLayers(parent1.finalLayerNodes, parent2.finalLayerNodes, +mutRateInput.value / 100);
         } else { // ASEXUAL REPRODUCTION/SOME MUTATIONS
 
         }
