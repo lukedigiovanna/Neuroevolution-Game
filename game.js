@@ -153,20 +153,20 @@ Player.prototype.distanceToWall = function(walls, angleOffset) {
     return Math.sqrt(closest);
 }
 
-Player.prototype.draw = function(ctx, width, height) {
+Player.prototype.draw = function(ctx, width, height, color="blue") {
     // draw the player
     ctx.strokeStyle = 'red';
     ctx.lineWidth = 2;
+    ctx.beginPath();
     ctx.moveTo(game.mapX(this.position.x, width), game.mapY(this.position.y, height));
-    ctx.lineTo(game.mapX(this.position.x + Math.cos(this.lookAngle) * 6, width), game.mapY(this.position.y + Math.sin(this.lookAngle) * 6, height));
+    ctx.lineTo(game.mapX(this.position.x + Math.cos(this.lookAngle) * 4, width), game.mapY(this.position.y + Math.sin(this.lookAngle) * 4, height));
     ctx.stroke();
-    ctx.strokeStyle = this === population[playerFocus].player ? 'cyan' : '';
-    ctx.fillStyle = this.hasWon ? 'yellow' : 'blue';
+    ctx.fillStyle = this.hasWon ? 'yellow' : color;
     ctx.beginPath();
     ctx.arc(game.mapX(this.position.x, width), game.mapY(this.position.y, height), 10, 0, 2 * Math.PI);
     ctx.fill();
+    ctx.strokeStyle = this === population[playerFocus].player ? "cyan" : "rgb(33, 33, 255)";
     ctx.stroke();
-    ctx.beginPath();
 }
 
 function Wall(x1, y1, x2, y2) {
@@ -234,17 +234,7 @@ document.addEventListener("keydown", function(e) {
     } else if (e.code == "Enter") {
         nextGeneration();
     } else if (e.code == "KeyB") {
-        // find the index of the current individual with the best fitness
-        let best = 0;
-        let bestFitness = population[best].calculateFitness();
-        for (var i = 1; i < population.length; i++) {
-            let fit = population[i].calculateFitness();
-            if (fit < bestFitness) {
-                bestFitness = fit;
-                best = i;
-            }
-        }
-        playerFocus = best;
+        chooseBest();
     }
 });
 document.addEventListener("keyup", function(e) {
@@ -279,16 +269,22 @@ const mutRangeInput = document.getElementById("mutrange");
 const speedInput = document.getElementById("speed");
 const mapInput = document.getElementById("mapselection");
 const timeInput = document.getElementById("time");
+const colorInput = document.getElementById("color");
+const followInput = document.getElementById("followbest");
 
 var generation = 1;
 var population = [];
 var timer = 0;
+var fitnessData = []; // stores average fitness of each generation
+var bestFitnessData = [];
 reset();
 
 function reset() {
     timer = 0;
     generation = 1;
     population = [];
+    fitnessData = [];
+    bestFitnessData = [];
     for (var i = 0; i < +popSizeInput.value; i++) 
         population.push(new NeuralNetwork());
     generationTag.innerHTML = "Pop. Size: " + popSizeInput.value + "<br>Generation: " + generation;
@@ -300,6 +296,9 @@ function reset() {
  * The top 10% also reproduce copies of themselves.
  */
 function nextGeneration() {
+    fitnessData.push(getAverageFitness());
+    bestFitnessData.push(getBestFitness());
+
     const count = Math.ceil(0.1 * population.length);
     let best = [];
     while (best.length < count) {
@@ -336,6 +335,45 @@ function nextGeneration() {
     generationTag.innerHTML = "Pop. Size: " + population.length + "<br>Generation: " + generation;
 }
 
+function colorFunction(value) {
+    let red = (Math.sin(value * 0.96 + 0.34) + 1) / 2 * 255;
+    let green = (Math.sin(value * 0.92 + 1.79) + 1) / 2 * 255;
+    let blue = (Math.sin(value * 0.94 + 3.88) + 1) / 2 * 255;
+    return `rgb(${red}, ${green}, ${blue})`;
+}
+
+function getAverageFitness() {
+    let avg = 0;
+    population.forEach(individual => {
+        avg += individual.calculateFitness();
+    });
+    avg /= population.length;
+    return avg;
+}
+
+function getBestFitness() {
+    let bestFitness = population[0].calculateFitness();
+    for (var i = 1; i < population.length; i++) {
+        let fit = population[i].calculateFitness();
+        if (fit < bestFitness) bestFitness = fit;
+    }
+    return bestFitness;
+}
+
+function chooseBest() {
+    // find the index of the current individual with the best fitness
+    let best = 0;
+    let bestFitness = population[best].calculateFitness();
+    for (var i = 1; i < population.length; i++) {
+        let fit = population[i].calculateFitness();
+        if (fit < bestFitness) {
+            bestFitness = fit;
+            best = i;
+        }
+    }
+    playerFocus = best;
+}
+
 data.forEach((data, header) => {
     let row = document.createElement("tr");
     let headerElement = document.createElement("td");
@@ -348,6 +386,24 @@ data.forEach((data, header) => {
 
 var playerFocus = 0;
 
+function drawGraph(dataValues, min, max, color="black") {
+    let prev = [];
+    for (var i = 0; i < dataValues.length; i++) {
+        var x = 0.05 + 0.9 * (i / (dataValues.length - 1));
+        var y = 0.95 - 0.9 * ((dataValues[i] - min) / (max - min));
+        x *= graphWidth;
+        y *= graphHeight;
+        if (prev.length > 0) {
+            grctx.strokeStyle = color;
+            grctx.beginPath();
+            grctx.moveTo(prev[0], prev[1]);
+            grctx.lineTo(x, y);
+            grctx.stroke();
+        }
+        prev = [x, y];
+    }
+}
+
 function gameLoop() {
     if (keyDown("KeyW")) 
         population[playerFocus].player.moveForward(2);
@@ -358,10 +414,14 @@ function gameLoop() {
     if (keyDown("KeyA"))
         population[playerFocus].player.turnLeft(0.1);
 
+    // update HTML elements.
     data.forEach((data, key) => {
         data.tag.innerHTML = data.func(population[playerFocus].player);
     });
-    
+    mutRangeInput.nextElementSibling.innerHTML = mutRangeInput.value / 100;
+    mutRateInput.nextElementSibling.innerHTML = mutRateInput.value / 100;
+    speedInput.nextElementSibling.innerHTML = speedInput.value + "x";
+
     population.forEach(net => {
         let choice = net.evaluate()
         if (choice[0])
@@ -378,7 +438,10 @@ function gameLoop() {
     
     population.forEach(individual => {
         individual.player.update(0.05, game);
-        individual.player.draw(gctx, gameWidth, gameHeight);
+        let color = "blue";
+        if (colorInput.checked)
+            color = colorFunction(individual.getCharacterValue())
+        individual.player.draw(gctx, gameWidth, gameHeight, color);
 
         let d = individual.player.position.distance(game.food);
         if (d < individual.closestToFood)
@@ -387,7 +450,7 @@ function gameLoop() {
 
     fitnessTag.innerHTML = "Fitness: " + formatNumber(population[playerFocus].calculateFitness(), 2);
 
-    population[playerFocus].render(nctx, netWidth, netHeight);
+    population[playerFocus].render(nctx, netWidth, netHeight, playerFocus);
 
     timer += 0.05;
 
@@ -400,6 +463,21 @@ function gameLoop() {
         nextGeneration();
         timer = 0;
     }
+
+    if (followInput.checked)
+        chooseBest();
+
+    // render the average fitness
+    grctx.fillStyle = 'white';
+    grctx.fillRect(0, 0, graphWidth, graphHeight);
+    // draw in the average fitnesses over time
+    let min = fitnessData[0], max = fitnessData[0];
+    fitnessData.concat(bestFitnessData).forEach(value => {
+        if (value < min) min = value;
+        else if (value > max) max = value;
+    });
+    drawGraph(fitnessData, min, max, color="blue");
+    drawGraph(bestFitnessData, min, max, color="red");
 }
 
 setInterval(function() {

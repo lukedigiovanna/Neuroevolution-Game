@@ -18,7 +18,10 @@
         <div id="canvases">
             <canvas id="neural-net" width="400" height="600"></canvas>
             <canvas id="game" width="600" height="600"></canvas>
-            <canvas id="graph" width="500" height="200"></canvas>
+            <div style="margin: 0;">
+                Fitness Graphs <span style="color: red">#</span>: Best <span style="color: blue">#</span>: Average
+                <canvas id="graph" width="500" height="200"></canvas>
+            </div>
             <div>
                 <p> Controls </p>
                 <button onclick="reset();"> Reset </button><br>
@@ -27,11 +30,11 @@
                 Mutation Rate<br>
                 <input type="range" min="0" max="100" value="5" id="mutrate"> <label for="mutrate">0.05</label><br>
                 Mutation Range<br>
-                <input type="number" value="0.1" id="mutrange"><br>
+                <input type="range" min="0" max="100" value="10" id="mutrange"> <label for="mutrange"> 0.1 </label></label><br>
                 Speed<br>
-                <input type="number" value="1" id="speed"><br>
+                <input type="range" min="0" max="10" value="1" id="speed"> <label for="speed"> 1x </label><br>
                 Time Per Generation <br>
-                <input type="number" value="10" id="time"><br>
+                <input type="number" value="10" min="1" max="100" id="time"><br>
                 Map<br>
                 <select name="maps" id="mapselection"><br>
                     <option value="blank">Blank</option>
@@ -40,7 +43,11 @@
                     <option value="cross">Cross</option>
                     <option value="cross x">Cross + X</option>
                     <option value="spiral">Spiral</option>
-                </select>
+                </select><br>
+                Show Color Similarity:
+                <input type="checkbox" id="color"><br>
+                Follow Best:
+                <input type="checkbox" id="followbest">
             </div>
         </div>
 

@@ -5,7 +5,7 @@
 }
 
 body {
-    background-color: #38b3ff;
+    background-color: #ccc;
     font-family: pixel;
     text-align: center;
 }
@@ -14,6 +14,13 @@ h1 {
     text-align: center;
     font-size: 40px;
     font-weight: bold;
+}
+
+input {
+    font-family: pixel;
+}
+select {
+    font-family: pixel;
 }
 
 canvas {

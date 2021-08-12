@@ -17,7 +17,7 @@ function breedLayers(layer1, layer2, mutationRate) {
         for (var j = 0; j < layer1[i].length; j++) {
             let mut = 0;
             if (Math.random() < mutationRate)
-                mut = random(-(+mutRangeInput.value), +mutRangeInput.value);
+                mut = random(-(+mutRangeInput.value/100), +mutRangeInput.value/100);
             if (Math.random() < 0.5) {
                 node.push(layer1[i][j] + mut);
             } else {
@@ -60,7 +60,7 @@ NeuralNetwork.prototype.calculateFitness = function() {
     return this.closestToFood + this.player.timer - (this.player.hasWon ? 10 : 0);
 }
 
-NeuralNetwork.prototype.render = function(ctx, width, height) {
+NeuralNetwork.prototype.render = function(ctx, width, height, index=-1) {
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, width, height);
     ctx.fillStyle = 'black';
@@ -110,6 +110,13 @@ NeuralNetwork.prototype.render = function(ctx, width, height) {
         ctx.arc(width / 4 * 3, height / (5) * (i + 1), 10, 0, 2 * Math.PI);
         ctx.fill();
     }
+
+    if (index > -1) {
+        ctx.font = "15px pixel";
+        ctx.fillStyle = "black";
+        ctx.textAlign = "left";
+        ctx.fillText("ID: "+index, 10, 20);
+    }
 }
 
 NeuralNetwork.prototype.evaluate = function() {
@@ -151,6 +158,17 @@ NeuralNetwork.prototype.evaluate = function() {
         output[i] = output[i] > 0; 
     }
     return output;
+}
+
+NeuralNetwork.prototype.getCharacterValue = function() {
+    let value = 0;
+    for (var i = 0; i < this.hiddenLayerNodes.length; i++)
+        for (var j = 0; j < this.hiddenLayerNodes[i].length; j++)
+            value += this.hiddenLayerNodes[i][j];
+    for (var i = 0; i < this.finalLayerNodes.length; i++)
+        for (var j = 0; j <this.finalLayerNodes[i].length; j++)
+            value += this.finalLayerNodes[i][j];
+    return value;
 }
 
 NeuralNetwork.prototype.clone = function() {
